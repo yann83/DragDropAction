@@ -16,7 +16,7 @@ Il sert à ranger et renommer des fichiers par lot.
 
 DragDropAction est simple d'utilisation, il suffit de faire glisser les fichiers vers l'icône
 
-[![DragNDrop](./images/image001.png)]
+![DragNDrop](./images/image001.png)
 
 ## Historique
 
