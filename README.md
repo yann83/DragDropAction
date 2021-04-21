@@ -58,7 +58,7 @@ Informatons en anglais
 
 Example :
 
-![Exemple](./images/image004.jpg)
+![Exemple](./images/image005.jpg)
 
 ## Historique
 
