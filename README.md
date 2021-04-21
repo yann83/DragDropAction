@@ -1,5 +1,6 @@
 # DragDropAction 
 
+
 ## Status
 
 Version en cours de developpement.
@@ -29,15 +30,18 @@ Voici la fenêtre des paramétres :
 1. Le nom du fichier original
 
 2. Lorsque vous cliquez sur `Auto Regex` le nom en `1` est transformé en expression régulière
+
    💡 C'est ici que [vous créez vos groupes] en ajoutant des parathèses pour former une capture
    
 3. Le bouton `Test Regex` test l'expression régulière `2`
 
 4. Le bouton `Destination` permet de choisir l'endroit où vous souhaitez déplacer le fichier.
+
    💡 Si un dossier n'existe pas il est créé automatiquement.
    
 5. Le bouton `Auto Rename` permet de régler le renommage. Chaque chiffres entre parenthèse correspond
    à un groupe capturé. Ici on peut changer l'ordre des groupes pour renommer les fichiers.
+   
    💡 On peut aussi remplacer la capture par un mot ou une phrase.
    
 6. Le bouton `Test Rename` permet de voir le résultat du nom renommé.
@@ -57,5 +61,7 @@ Example :
 ![Exemple](./images/image004.jpg)
 
 ## Historique
+
+21-04-21 : Modification du Readme
 
 20-04-21 : Création du dépôt et livraison des fichiers
