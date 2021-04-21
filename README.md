@@ -31,7 +31,7 @@ Voici la fenêtre des paramétres :
 
 2. Lorsque vous cliquez sur `Auto Regex` le nom en `1` est transformé en expression régulière
 
-   💡 C'est ici que [vous créez vos groupes] en ajoutant des parathèses pour former une capture
+   💡 C'est ici que __vous__ __créez__ __vos__ __groupes__ en ajoutant des parathèses pour former une capture
    
 3. Le bouton `Test Regex` test l'expression régulière `2`
 
