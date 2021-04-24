@@ -62,6 +62,8 @@ Example :
 
 ## Historique
 
+21-04-21 : Correction de du champ `Test Regex` pour plus de 4 groupes
+
 21-04-21 : Modification du Readme
 
 20-04-21 : Création du dépôt et livraison des fichiers

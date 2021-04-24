@@ -133,6 +133,7 @@ While 1
                     _GUICtrlRichEdit_WriteLine($Label1Regex, $aColorLabel1Regex , "", "", 0xFF0000)
                 Else
                     _GUICtrlRichEdit_SetText($Label1Regex, "") ;vide l'input
+
                     $nColors = 0
                     For $i = 0 To UBound($aColorLabel1Regex) - 1
                         If $i = 0 Then
@@ -140,12 +141,13 @@ While 1
                         Else
                             _GUICtrlRichEdit_WriteLine($Label1Regex, $aColorLabel1Regex[$i] , "", "", $aColors[$nColors])
                         Endif
-                        If $i >= 4 Then
+                        If $i = 3 And Mod($i,3) = 0 Then
                             $nColors = 0
                         Else
                             $nColors += 1
                         EndIf
                     Next
+
                 EndIf
             EndIf
         Case $Button3Destination
