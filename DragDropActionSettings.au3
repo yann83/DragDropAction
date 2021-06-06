@@ -13,6 +13,7 @@
  Description du programme :
 	<Réglages du programme DragDropAction>
 #ce ----------------------------------------------------------------------------
+#include <.\UDF\_Languages.au3>
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
 #include <GUIConstantsEx.au3>
@@ -21,17 +22,15 @@
 #include <File.au3>
 #include <GuiRichEdit.au3>
 #include <GuiListView.au3>
+#include <Array.au3>
+#include <.\UDF\_Functions.au3>
 
 Global $rRetour
 
 Global $sFichierINI = @ScriptDir & "\DragDropAction.ini"
-If Not FileExists($sFichierINI) Then
-    _FileCreate($sFichierINI)
-    IniWrite($sFichierINI,"name","","")
-    IniWrite($sFichierINI,"capture","","")
-    IniWrite($sFichierINI,"move","","")
-    IniWrite($sFichierINI,"rename","","")
-Else
+Global $bFichierINIError = _InitializeFichierINI($sFichierINI)
+
+If Not $bFichierINIError Then
     $rRetour = _IniRearange($sFichierINI)
     If @error Then
         MsgBox(16,"Erreur",$rRetour)
@@ -39,11 +38,10 @@ Else
     EndIf
 EndIf
 
-
 #Region ### START Koda GUI section ### Form=G:\DOCUMENTS\PROGRAMMATION\AUTOIT\DragDropAction\Settings.kxf
-Global $DragDropAction = GUICreate("DragDropAction Settings", 660, 560, -1, -1)
+Global $DragDropAction = GUICreate($_Gui_MainName, 660, 590, -1, -1)
 
-Global $Input0Name = GUICtrlCreateInput("Entrez le nom à transformer", 24, 20, 522, 30)
+Global $Input0Name = GUICtrlCreateInput($_Gui_Input0Name, 24, 20, 522, 30)
 GUICtrlSetFont($Input0Name, 16, 400, 0, "MS Sans Serif")
 Global $Input1Regex = GUICtrlCreateInput("", 24, 60, 522, 30)
 GUICtrlSetFont($Input1Regex, 16, 400, 0, "MS Sans Serif")
@@ -51,42 +49,68 @@ Global $Input2Destination = GUICtrlCreateInput("", 24, 140, 522, 30)
 GUICtrlSetFont($Input2Destination, 16, 400, 0, "MS Sans Serif")
 Global $Input3Rename = GUICtrlCreateInput("", 24, 180, 522, 30)
 GUICtrlSetFont($Input3Rename, 16, 400, 0, "MS Sans Serif")
-Global $Input4Name = GUICtrlCreateInput("Nom de l'action", 265, 260, 280, 30)
+Global $Input4Name = GUICtrlCreateInput($_Gui_Input4Name, 265, 260, 280, 30)
 GUICtrlSetFont($Input4Name, 16, 400, 0, "MS Sans Serif")
-
 
 Global $Label1Regex = _GUICtrlRichEdit_Create($DragDropAction, "", 24, 100, 522, 30,BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL,$ES_READONLY))
 _GUICtrlRichEdit_SetText($Label1Regex,  "")
 Global $Label2Rename = GUICtrlCreateLabel("", 24, 220, 522, 30)
 GUICtrlSetFont($Label2Rename, 16, 400, 0, "MS Sans Serif")
-Global $Label3Name = GUICtrlCreateLabel("Nom : ", 198, 262, 60, 30)
+Global $Label3Name = GUICtrlCreateLabel($_Gui_Label3Name, 156, 262, 100, 30)
 GUICtrlSetFont($Label3Name, 16, 400, 0, "MS Sans Serif")
+Global $Label4Search = GUICtrlCreateLabel($_Gui_Label4Search, 156, 302, 100, 30)
+GUICtrlSetFont($Label4Search, 16, 400, 0, "MS Sans Serif")
 
 Global $Group1Rename  = GUICtrlCreateGroup("", 20, 215, 527, 35)
-Global $Group2Edit = GUICtrlCreateGroup("Edition", 20, 255, 100, 45)
+Global $Group2Edit = GUICtrlCreateGroup($_Gui_Group2Edit, 20, 255, 100, 45)
 GUICtrlSetBkColor($Group2Edit, 0xFF8000)
 
-Global $Button1AutoReg = GUICtrlCreateButton("Auto Regex", 560, 60, 70, 30)
-Global $Button2TestReg = GUICtrlCreateButton("Test Regex", 560, 100, 70, 30)
-Global $Button3Destination = GUICtrlCreateButton("Destination", 560, 140, 70, 30)
-Global $Button4AutoRename = GUICtrlCreateButton("Auto Rename", 560, 180, 70, 30)
-Global $Button5TestRename = GUICtrlCreateButton("Test Rename", 560, 220, 70, 30)
+Global $Button1AutoReg = GUICtrlCreateButton($_Gui_Button1AutoReg, 560, 60, 70, 30)
+Global $Button2TestReg = GUICtrlCreateButton($_Gui_Button2TestReg, 560, 100, 70, 30)
+Global $Button3Destination = GUICtrlCreateButton($_Gui_Button3Destination, 560, 140, 70, 30)
+Global $Button4AutoRename = GUICtrlCreateButton($_Gui_Button4AutoRename, 560, 180, 70, 30)
+Global $Button5TestRename = GUICtrlCreateButton($_Gui_Button5TestRename, 560, 220, 70, 30)
 
 Global $Button6Add = GUICtrlCreateIcon (".\ICO\add.ico",-1, 30, 275, 20,20)
+GUICtrlSetTip($Button6Add, $_Gui_Add)
 Global $Button7Mod = GUICtrlCreateIcon (".\ICO\edit.ico",-1, 60, 275, 20,20)
+GUICtrlSetTip($Button7Mod, $_Gui_Modify)
 Global $Button8Del = GUICtrlCreateIcon (".\ICO\del.ico",-1, 90, 275, 20,20)
+GUICtrlSetTip($Button8Del, $_Gui_Delete)
 
-Global $ListView = GUICtrlCreateListView("ID|Nom du programme", 24, 310, 522, 240)
-$rRetour = _DisplayListView($sFichierINI,"name",$ListView)
-If Not $rRetour Then
-    MsgBox(16,"Erreur","Fichier ini non valide")
-    Exit
-EndIf
+; Creation de la zone de recherche
+Global $idEdit = GUICtrlCreateEdit( "", 265, 300, 280, 30, BitXOR( $GUI_SS_DEFAULT_EDIT, $WS_HSCROLL, $WS_VSCROLL ) )
+GUICtrlSetFont($idEdit, 16, 400, 0, "MS Sans Serif")
+Global $hEdit = GUICtrlGetHandle($idEdit)
+Global $idEditSearch = GUICtrlCreateDummy()
+
+; Handle $WM_COMMAND messages from Edit control
+; To be able to read the search string dynamically while it's typed in
+GUIRegisterMsg( $WM_COMMAND, "WM_COMMAND" )
+
+Global $idListView = GUICtrlCreateListView("", 24, 340, 522, 240,$LVS_OWNERDATA)
+Global $hListView = GUICtrlGetHandle( $idListView )
+_GUICtrlListView_SetExtendedListViewStyle( $hListView, BitOR( $LVS_EX_DOUBLEBUFFER, $LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES ) )
+_GUICtrlListView_AddColumn( $hListView, $_Gui_ListViewCol1, $_Gui_ListViewCol1Size)
+_GUICtrlListView_AddColumn( $hListView, $_Gui_ListViewCol2, $_Gui_ListViewCol2Size )
+
+; Handle $WM_NOTIFY messages from ListView
+; Necessary to display the rows in a virtual ListView
+GUIRegisterMsg( $WM_NOTIFY, "WM_NOTIFY" )
 
 GUISetState(@SW_SHOW)
 #EndRegion ### END Koda GUI section ###
 
+;initialyze search array
+Global $aMoteurRecherche = _TableauObjetsEtRecherche($sFichierINI,"name")
+                            ;$aObjets ;$iNbObjets $aTableauRecherche $iNbTableauRecherche
+Global $aObjets = $aMoteurRecherche[0]
+Global $aTableauRecherche = $aMoteurRecherche[2]
+; Display items
+GUICtrlSendMsg( $idListView, $LVM_SETITEMCOUNT, $aMoteurRecherche[3], 0 )
+
 #Region ### Declaration des Global ###
+Global $iIndiceListView,$bIsObjectSelected,$aDataListView
 Global $nMsg
 Global $MainExe = "DragDropAction.exe"
 Global $ReadInput0Name
@@ -101,6 +125,7 @@ Global $nGroupes
 Global $sRename
 Global $sSelection = ""
 Global $bIsModif = False
+Global $sLectureRecherche = ""
 #EndRegion ### END Declaration des Global###
 
 While 1
@@ -114,6 +139,32 @@ While 1
             EndIf
             GUIDelete($DragDropAction)
             Exit
+
+#Region ### Search section ###
+        Case $idEditSearch
+            $sLectureRecherche = GUICtrlRead( $idEdit )
+            If $sLectureRecherche = "" Then
+                ; Empty search string, display all rows
+                For $i = 0 To $aMoteurRecherche[1] - 1
+                    $aTableauRecherche[$i] = $i
+                Next
+                $aMoteurRecherche[3] = $aMoteurRecherche[1]
+            Else
+                ; Find rows matching the search string
+                $aMoteurRecherche[3] = 0
+                For $i = 0 To $aMoteurRecherche[1] - 1
+                    If StringInStr( $aObjets[$i][1], $sLectureRecherche ) Then ; Normal search
+                        $aTableauRecherche[$aMoteurRecherche[3]] = $i
+                        $aMoteurRecherche[3] += 1
+                    EndIf
+                Next
+            EndIf
+            ; Display items
+            GUICtrlSendMsg( $idListView, $LVM_SETITEMCOUNT, $aMoteurRecherche[3], 0 )
+            ;ConsoleWrite( StringFormat( "%4d", $aMoteurRecherche[3] ) & " rows matching """ & $sLectureRecherche & """" & @CRLF )
+#EndRegion ### END Search section ###
+
+#Region ### Right Buttons ###
         Case $Button1AutoReg ;automatique regex
             If GUICtrlRead($Input0Name) = "" Then
                 MsgBox(16,"Erreur","Veuillez renseigner le 1er champ en haut")
@@ -147,7 +198,6 @@ While 1
                             $nColors += 1
                         EndIf
                     Next
-
                 EndIf
             EndIf
         Case $Button3Destination
@@ -181,270 +231,140 @@ While 1
                 $aGroupsOrder = _GroupsOrder(GUICtrlRead($Input3Rename))
                 GUICtrlSetData($Label2Rename,_Rename($aGroupsOrder,GUICtrlRead($Input0Name),GUICtrlRead($Input1Regex)))
             EndIf
+#EndRegion ### END Right Buttons ###
+
+#Region ### CRUD section ###
         Case $Button6Add
             If GUICtrlRead($Input1Regex) = "" And GUICtrlRead($Input3Rename) = "" And GUICtrlRead($Input4Name) = ""  Then
                 MsgBox(16,"Erreur","Veuillez renseigner les champs Regex et Rename.")
             Else
                 _Ajouter($sFichierINI,GUICtrlRead($Input4Name) ,GUICtrlRead($Input1Regex) ,GUICtrlRead($Input2Destination),GUICtrlRead($Input3Rename))
-                _DisplayListView($sFichierINI,"name",$ListView)
+                _Recharge()
                 MsgBox(64,"","L'entrée "&GUICtrlRead($Input4Name)&" a été ajoutée")
             EndIf
         Case $Button7Mod
             If $bIsModif = True Then
                 $bIsModif = False
                 ;si la slection est pas vide on enregistre
-                If $sSelection <> "" Then _Modifier($sFichierINI,$sSelection,$bIsModif,$Input4Name,$Input1Regex,$Input2Destination,$Input3Rename)
+                If $aDataListView[1] <> "" Then _Modifier($sFichierINI,$aDataListView[1],$bIsModif,$Input4Name,$Input1Regex,$Input2Destination,$Input3Rename)
                  GUICtrlSetState($Button6Add,$GUI_ENABLE)
                 GUICtrlSetState($Button8Del,$GUI_ENABLE)
-                $sSelection = ""
-                _DisplayListView($sFichierINI,"name",$ListView)
+                $aDataListView[1] = ""
+                 _Recharge()
                 MsgBox(64,"","L'entrée "&$sSelection&" a été modifiée")
             ElseIf $bIsModif = False Then
-                $sSelection = _FormatSeclect($ListView)
-                If @error then
-                    MsgBox(16,"","selectionner une ligne")
+                $aDataListView = _Selection()
+                If $aDataListView = 0 Then
+                    MsgBox(64,"Attention","Veuillez selectionner une ligne")
                 Else
                     $bIsModif = True
                     ;on met les entrée dans les input
-                    _Modifier($sFichierINI,$sSelection,$bIsModif,$Input4Name,$Input1Regex,$Input2Destination,$Input3Rename)
+                    _Modifier($sFichierINI,$aDataListView[1],$bIsModif,$Input4Name,$Input1Regex,$Input2Destination,$Input3Rename)
                     GUICtrlSetState($Button6Add,$GUI_DISABLE)
                     GUICtrlSetState($Button8Del,$GUI_DISABLE)
-                    MsgBox(64,"","L'entrée "&$sSelection&" a été affichée")
+                    MsgBox(64,"","L'entrée "&$aDataListView[1]&" a été affichée")
                 EndIf
             EndIf
         Case $Button8Del
-            $sSelection = _FormatSeclect($ListView)
-            If @error then
-                MsgBox(16,"","selectionner une ligne")
+            $aDataListView = _Selection()
+            If $aDataListView = 0 Then
+                MsgBox(64,"Attention","Veuillez selectionner une ligne")
             Else
-                _Supprimer($sFichierINI,$sSelection)
-                $rRetour = _IniRearange($sFichierINI)
-                If @error Then
-                    MsgBox(16,"Erreur",$rRetour)
-                    Exit
+                If _Supprimer($sFichierINI,$aDataListView[1]) Then
+                    $rRetour = _IniRearange($sFichierINI)
+                    If @error Then
+                        MsgBox(16,"Erreur",$rRetour)
+                        Exit
+                    EndIf
                 EndIf
-                _DisplayListView($sFichierINI,"name",$ListView)
-                $sSelection = ""
-                MsgBox(64,"","L'entrée "&$sSelection&" a été supprimée")
+                MsgBox(64,"","L'entrée "&$aDataListView[1]&" a été supprimée")
+                _Recharge()
             EndIf
-
+#EndRegion ### END CRUD section ###
     EndSwitch
 WEnd
 
-#Region ### Fonctions ###
-Func _Ajouter($sINIFile,$sName,$sRegex,$sMove,$sRename)
-    Local $aSectionMove = IniReadSection($sINIFile,"name")
-    Local $nID = 1
-    While 1
-        If _ArraySearch($aSectionMove,$nID,1, 0, 0, 0, 1, 0) > -1 Then
-            $nID += 1
-        Else
-            IniWrite($sINIFile,"name",$nID,$sName)
-            IniWrite($sINIFile,"capture",$nID,$sRegex)
-            IniWrite($sINIFile,"move",$nID,$sMove)
-            IniWrite($sINIFile,"rename",$nID,$sRename)
-            Return (True)
-        EndIf
-    WEnd
+#Region ### Functions with globals###
+Func _Selection()
+    $iIndiceListView = Int(_GUICtrlListView_GetSelectedIndices($idListView)); récupére l'indice de l'item de la liste
+    $bIsObjectSelected = _GUICtrlListView_GetItemSelected( $idListView, $iIndiceListView); renvoie True si l'item est selectionné
+    If $bIsObjectSelected = True Then Return _GUICtrlListView_GetItemTextArray($idListView, $iIndiceListView);récupére dans un tableau les données de l'item
+    Return (0)
 EndFunc
 
-Func _Modifier($sINIFile,$sID,$bStatus,$hInputName,$hInputCapture,$hInputMove,$InputRename)
-    If $bStatus = True Then ; on rempli les inputs
-        GUICtrlSetData($hInputName,IniRead($sINIFile,"name",$sID,"Erreur lecture"))
-        GUICtrlSetData($hInputCapture,IniRead($sINIFile,"capture",$sID,"Erreur lecture"))
-        GUICtrlSetData($hInputMove,IniRead($sINIFile,"move",$sID,"Erreur lecture"))
-        GUICtrlSetData($InputRename,IniRead($sINIFile,"rename",$sID,"Erreur lecture"))
-        Return True
-    ElseIf $bStatus = False Then; on enregistre les modis
-        IniWrite($sINIFile,"name",$sID,GUICtrlRead($hInputName))
-        IniWrite($sINIFile,"capture",$sID,GUICtrlRead($hInputCapture))
-        IniWrite($sINIFile,"move",$sID,GUICtrlRead($hInputMove))
-        IniWrite($sINIFile,"rename",$sID,GUICtrlRead($InputRename))
-        Return False
-    EndIf
+Func _Recharge()
+    GUICtrlSetData($idEdit,"")
+     _GUICtrlListView_DeleteAllItems($hListView)
+    $aMoteurRecherche = _TableauObjetsEtRecherche($sFichierINI,"name")
+    $aObjets = $aMoteurRecherche[0]
+    $aTableauRecherche = $aMoteurRecherche[2]
+    GUICtrlSendMsg( $idListView, $LVM_SETITEMCOUNT, $aMoteurRecherche[3], 0 )
 EndFunc
 
-Func _Supprimer($sINIFile,$sID)
-    Local $aSections = IniReadSectionNames($sINIFile)
-    For $i = 1 To $aSections[0]
-        IniDelete($sINIFile,$aSections[$i],$sID)
-    Next
-EndFunc
-
-Func _IniRearange($sINIFile)
-    Local $aSections = IniReadSectionNames($sINIFile)
-    Local $aSection
-    Local $nSomme = 0
-    For $i = 1 To $aSections[0]
-        $aSection = IniReadSection($sINIFile,$aSections[$i])
-
-        # Verification du nombre d'entrée
-        If $nSomme = 0 Then
-            $nSomme = Number($aSection[0][0])
-        ElseIf $nSomme <> Number($aSection[0][0]) Then
-            Return SetError(1,0,"La somme des entrées de "&$aSections[$i]&" est differente de la précédente")
-        Else
-            $nSomme = Number($aSection[0][0])
-        EndIf
-        # Fin Verification du nombre d'entrée
-
-        # Convertion de l'ID en nombre pour le tri
-        For $k= 1 To $aSection[0][0]
-            $aSection[$k][0] = Number($aSection[$k][0])
+Func _TableauObjetsEtRecherche($sPathIni,$sIniSection)
+    Local $ifNbObjets = 0, $afObjets[1000][2]
+    Local $aDATA = IniReadSection($sPathIni,$sIniSection)
+    If Not @error  Then
+        ; Enumerate through the array displaying the section names.
+        For $i = 1 To $aDATA[0][0]
+            $afObjets[$i-1][0] = $aDATA[$i][0]
+            $afObjets[$i-1][1] = $aDATA[$i][1]
         Next
-        # Fin Convertion de l'ID en nombre pour le tri
+        $ifNbObjets = $aDATA[0][0]
+        Local $afRetTableau [4] = [$afObjets,$ifNbObjets,"",""]
 
-        _ArraySort($aSection,0,1,0,0) ; Tri par ID croissant
-    Next
-
-    For $i = 1 To $aSections[0]  ;Step -1 ; lecture de bas vers le haut
-        $aSection = IniReadSection($sINIFile,$aSections[$i])
-        # Verification du de l'ordre des ID
-        For $k= 1 To $aSection[0][0]
-            If $k <> Number($aSection[$k][0]) Then $aSection[$k][0] = $k
+        Local $afTableauRecherche[$ifNbObjets]
+        Local $ifNbTableauRecherche = 0
+          ; Set search array to include all items
+        For $i = 0 To $ifNbObjets - 1
+            $afTableauRecherche[$i] = $i
         Next
-        # Fin Verification du de l'ordre des ID
-
-        # Reecriture de la section
-        IniDelete($sINIFile,$aSections[$i])
-        For $k= 1 To $aSection[0][0]
-            IniWrite($sINIFile,$aSections[$i],$aSection[$k][0],$aSection[$k][1])
-        Next
-        # Fin Reecriture de la section
-    Next
-
-    SetError(0)
-    Return True
-EndFunc
-
-Func _FormatSeclect($hListView)
-    Local $sLecture = GUICtrlRead(GUICtrlRead($hListView))
-    If $sLecture = "0" Then Return SetError(1,0,"pas de ligne selectionne")
-    $sLecture = StringTrimRight($sLecture,1)
-    Local $aSplitRow = StringSplit($sLecture,"|")
-    SetError(0)
-    Return($aSplitRow[1])
-EndFunc
-
-Func _DisplayListView($sINIFile,$sSectionName,$hListView)
-    _GUICtrlListView_DeleteAllItems($hListView)
-    Local $aINISection = IniReadSection($sINIFile,$sSectionName)
-    If Not @error Then
-        If IsArray($aINISection) Then
-            For $i = 1 To $aINISection[0][0]
-                GUICtrlCreateListViewItem($aINISection[$i][0]&"|"&$aINISection[$i][1], $hListView)
-            Next
-            SetError(0)
-            Return(True)
-        EndIf
+        $ifNbTableauRecherche = $ifNbObjets
+        $afRetTableau[2] = $afTableauRecherche
+        $afRetTableau[3] = $ifNbTableauRecherche
     Else
-        Return SetError(1,0,"Erreur lecture du fichier ini")
-    EndIf
-EndFunc
-
-Func _Rename($aArrayRename,$sString,$sRegex)
-    Local $nGroup
-    Local $sRename = ""
-    Local $aArrayRegex = StringRegExp($sString,$sRegex,1)
-    If  $aArrayRename[0][0] <= UBound($aArrayRegex) Then
-        For $i = 1 To $aArrayRename[0][0]
-            $nGroup = Number($aArrayRename[$i][0])
-            If $aArrayRename[$i][1] <>"" Then
-                $sRename &= $aArrayRename[$i][1]
-            Else
-                $sRename &= $aArrayRegex[$nGroup]
-            EndIf
-        Next
-    Else
-        Return SetError(1,0,"Il n'y a pas assez de groupes")
+        Return SetError(1,0,"Erreur lecture tableau")
     EndIf
     SetError(0)
-    Return($sRename)
+     Return $afRetTableau
 EndFunc
 
-Func _GroupsOrder($sString)
-    Local $atableau[1][2]
-    Local $aDelim = StringRegExp($sString, "\((\d)\)", 3)
-    If IsArray($aDelim) Then
-        Local $aParts = StringSplit(StringRegExpReplace($sString, "(\(\d\))", "#"), "#", 3)
-        _ArrayDelete($aParts,0)
-        Local $NbRows = UBound($aDelim)
-        ReDim $atableau[$NbRows][2]
-        For $i = 0 To $NbRows - 1
-                $atableau[$i][0] = $aDelim[$i]
-                $atableau[$i][1] = $aParts[$i]
-        Next
-        _ArrayInsert($atableau,0,$NbRows)
-        SetError(0)
-        Return($atableau)
-    Else
-        Return SetError(1,0,"Pattern introuvable")
-    EndIf
+Func WM_COMMAND( $hWnd, $iMsg, $wParam, $lParam )
+    Local $hWndFrom = $lParam
+    Local $iCode = BitShift( $wParam, 16 ) ; High word
+    Switch $hWndFrom
+        Case $hEdit;variable
+            Switch $iCode
+                Case $EN_CHANGE
+                    GUICtrlSendToDummy( $idEditSearch ); variable
+            EndSwitch
+    EndSwitch
+    Return $GUI_RUNDEFMSG
 EndFunc
 
-Func _AutoRegex($sString)
-    Local $aParseCapture
-    Local $nLength = 0
-    $sString = StringReplace ($sString, ".", "\.")
-    $sString = StringReplace ($sString, " ", "\W")
-    $sString = StringReplace ($sString, "-", "\W")
-    If StringRegExp($sString,"(\d{1,})",0) = 1 Then
-        $aParseCapture = StringRegExp($sString,"(\d{1,})",3) ; On regex le string
-        $sString = StringRegExpReplace($sString,"(\d{1,})","%i%"); on remplace les chiffres par %i%
-        For $i = 0 To UBound($aParseCapture) - 1
-            $nLength = StringLen($aParseCapture[$i]) ;on calcul le nombre de chiffres
-            $sString = StringReplace($sString,"%i%","\d{"&$nLength&"}",1); on remplace progressivement de gauche vers la droite %i%
-        Next
-    EndIf
-    SetError(0)
-    Return($sString)
-EndFunc
+Func WM_NOTIFY( $hWnd, $iMsg, $wParam, $lParam )
+    Local Static $tText = DllStructCreate( "wchar[50]" )
+    Local Static $pText = DllStructGetPtr( $tText )
 
-Func _TestReg($sString,$sRegex)
-    Local $aParseCapture
-    If StringRegExp($sString,$sRegex,0) = 1 Then
-        $aParseCapture = StringRegExp($sString,$sRegex,1) ; On regex le string
-        SetError(0)
-        Return ($aParseCapture)
-    Else
-        Return SetError(1,0,"Pas de capture")
-    EndIf
-EndFunc
+    Local $tNMHDR, $hWndFrom, $iCode
+    $tNMHDR = DllStructCreate( $tagNMHDR, $lParam )
+    $hWndFrom = HWnd( DllStructGetData( $tNMHDR, "hWndFrom" ) )
+    $iCode = DllStructGetData( $tNMHDR, "Code" )
 
-Func _CountGroup($sString,$sRegex)
-    Local $aParseCapture
-    Local $nGroup
-    If StringRegExp($sString,$sRegex,0) = 1 Then
-        $aParseCapture = StringRegExp($sString,$sRegex,1) ; On regex le string
-        $nGroup = UBound($aParseCapture)
-        SetError(0)
-        Return ($nGroup)
-    Else
-        Return SetError(1,0,"Pas de capture")
-    EndIf
-EndFunc
+    Switch $hWndFrom
+        Case $hListView; variable
+            Switch $iCode
+                Case $LVN_GETDISPINFOW
+                    Local $tNMLVDISPINFO = DllStructCreate( $tagNMLVDISPINFO, $lParam )
+                    If BitAND( DllStructGetData( $tNMLVDISPINFO, "Mask" ), $LVIF_TEXT ) Then
+                        Local $sItem = $aObjets[$aTableauRecherche[DllStructGetData($tNMLVDISPINFO,"Item")]][DllStructGetData($tNMLVDISPINFO,"SubItem")]; variable
+                        DllStructSetData( $tText, 1, $sItem ); variable
+                        DllStructSetData( $tNMLVDISPINFO, "Text", $pText )
+                        DllStructSetData( $tNMLVDISPINFO, "TextMax", StringLen( $sItem ) ); variable
+                    EndIf
+            EndSwitch
+    EndSwitch
 
-Func _GUICtrlRichEdit_WriteLine($hWnd, $sText, $iIncrement = 0, $sAttrib = "", $iColor = -1)
-    ; Count the @CRLFs
-    StringReplace(_GUICtrlRichEdit_GetText($hWnd, True), "", "")
-    Local $iLines = @extended
-    ; Adjust the text char count to account for the @CRLFs
-    Local $iEndPoint = _GUICtrlRichEdit_GetTextLength($hWnd, True, True) - $iLines
-    ; Add new text
-    _GUICtrlRichEdit_AppendText($hWnd, $sText )
-    ; Select text between old and new end points
-    _GuiCtrlRichEdit_SetSel($hWnd, $iEndPoint, -1)
-    ; Convert colour from RGB to BGR
-    $iColor = Hex($iColor, 6)
-    $iColor = '0x' & StringMid($iColor, 5, 2) & StringMid($iColor, 3, 2) & StringMid($iColor, 1, 2)
-    ; Set colour
-    If $iColor <> -1 Then _GuiCtrlRichEdit_SetCharColor($hWnd, $iColor)
-    ; Set size
-    If $iIncrement <> 0 Then _GUICtrlRichEdit_ChangeFontSize($hWnd, $iIncrement)
-    ; Set weight
-    If $sAttrib <> "" Then _GUICtrlRichEdit_SetCharAttributes($hWnd, $sAttrib)
-    ; Clear selection
-    _GUICtrlRichEdit_Deselect($hWnd)
+    Return $GUI_RUNDEFMSG
 EndFunc
-
 #EndRegion ### END Fonctions###

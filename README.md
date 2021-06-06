@@ -3,7 +3,8 @@
 
 ## Status
 
-Version en cours de developpement.
+[![Generic badge](https://img.shields.io/badge/Version-0.9b-green.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/autoit-3.3.14.5-green.svg)](https://shields.io/)
 
 ## Description
 
@@ -61,6 +62,8 @@ Example :
 ![Exemple](./images/image005.jpg)
 
 ## Historique
+
+21-06-06 : Ajout d'un champ de recherche dynamique et amélioration du code pour la partie settings
 
 21-04-21 : Correction de du champ `Test Regex` pour plus de 4 groupes
 
