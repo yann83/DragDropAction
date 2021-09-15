@@ -1,4 +1,4 @@
-# DragDropAction 
+# DragDropAction
 
 
 ## Status
@@ -20,7 +20,7 @@ DragDropAction est simple d'utilisation, il suffit de faire glisser les fichiers
 
 ![DragNDrop](./images/image001.jpg)
 
-Faîtes un clic droit sur la fenêtre pour accèder aux parametres
+Faîtes un clic droit sur la fenêtre pour accèder aux parametres.
 
 ![DragNDrop](./Resources/play.jpg)
 
