@@ -148,7 +148,7 @@ EndFunc
 Func _AutoRegex($sString)
     Local $aParseCapture
     Local $nLength = 0
-    Local $aString[8][2] = [[7,""],[".", "\."],[" ", "\W"],["-", "\W"],["(", "\("],[")", "\)"],["[", "\["],["]", "\]"]]
+    Local $aString[8][2] = [[7,""],[".", ".*?"],[" ", "\W"],["-", "\-"],["(", "\("],[")", "\)"],["[", "\["],["]", "\]"]]
     For $i = 1 To $aString[0][0]
         $sString = StringReplace ($sString, $aString[$i][0], $aString[$i][1])
     Next

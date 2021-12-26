@@ -13,6 +13,7 @@
  Description du programme :
 	< Outil de rangement automatique des fichiers>
 #ce ----------------------------------------------------------------------------
+#NoTrayIcon
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
 #include <SendMessage.au3>

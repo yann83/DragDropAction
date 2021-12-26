@@ -13,6 +13,7 @@
  Description du programme :
 	<Réglages du programme DragDropAction>
 #ce ----------------------------------------------------------------------------
+#NoTrayIcon
 #include <.\UDF\_Languages.au3>
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
@@ -45,6 +46,11 @@ Global $Input0Name = GUICtrlCreateInput($_Gui_Input0Name, 24, 20, 522, 30)
 GUICtrlSetFont($Input0Name, 16, 400, 0, "MS Sans Serif")
 Global $Input1Regex = GUICtrlCreateInput("", 24, 60, 522, 30)
 GUICtrlSetFont($Input1Regex, 16, 400, 0, "MS Sans Serif")
+GUICtrlSetTip( $Input1Regex, "\ escape special caracter"&@CRLF& _
+                                                "\W non word"&@CRLF& _
+                                                "((?i)Test) match case insensitive "&@CRLF& _
+                                                ".*? match eventualy any characters"&@CRLF& _
+                                                "\d{3,6} match digi between 3 and 6")
 Global $Input2Destination = GUICtrlCreateInput("", 24, 140, 522, 30)
 GUICtrlSetFont($Input2Destination, 16, 400, 0, "MS Sans Serif")
 Global $Input3Rename = GUICtrlCreateInput("", 24, 180, 522, 30)
