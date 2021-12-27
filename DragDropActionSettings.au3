@@ -26,6 +26,37 @@
 #include <Array.au3>
 #include <.\UDF\_Functions.au3>
 
+Global $TipHelp = "."&@TAB&@TAB&"Any character, except newline"&@CRLF& _
+                            "\w"&@TAB&@TAB&"Word"&@CRLF& _
+                            "\d"&@TAB&@TAB&"Digit"&@CRLF& _
+                            "\s"&@TAB&@TAB&"Whitespace"&@CRLF& _
+                            "\W"&@TAB&@TAB&"Not word"&@CRLF& _
+                            "\D"&@TAB&@TAB&"Not digit"&@CRLF& _
+                            "\S"&@TAB&@TAB&"Not whitespace"&@CRLF& _
+                            "[abc]"&@TAB&@TAB&"Any of a, b, or c"&@CRLF& _
+                            "[a-e]"&@TAB&@TAB&"Characters between a and e"&@CRLF& _
+                            "[1-9]"&@TAB&@TAB&"Digit between 1 and 9"&@CRLF& _
+                            "[^abc]"&@TAB&@TAB&"Any character except a, b or c"&@CRLF& _
+                            "\. \\"&@TAB&@TAB&"Escape special character used by regex"&@CRLF& _
+                            "\t"&@TAB&@TAB&"Tab"&@CRLF& _
+                            "\n"&@TAB&@TAB&"Newline"&@CRLF& _
+                            "\r"&@TAB&@TAB&"Carriage return"&@CRLF& _
+                            "(abc)"&@TAB&@TAB&"Capture group"&@CRLF& _
+                            "(a|b)"&@TAB&@TAB&"Match a or b"&@CRLF& _
+                            "(?:abc)"&@TAB&@TAB&"Match abc, but don’t capture"&@CRLF& _
+                            "a*"&@TAB&@TAB&"Match 0 or more"&@CRLF& _
+                            "a+"&@TAB&@TAB&"Match 1 or more"&@CRLF& _
+                            "a?"&@TAB&@TAB&"Match 0 or 1"&@CRLF& _
+                            "a{5}"&@TAB&@TAB&"Match exactly 5"&@CRLF& _
+                            "a{,3}"&@TAB&@TAB&"Match up to 3"&@CRLF& _
+                            "a{3,}"&@TAB&@TAB&"Match 3 or more"&@CRLF& _
+                            "a{1,3}"&@TAB&@TAB&"Match between 1 and 3"&@CRLF& _
+                            "a(?=b)"&@TAB&@TAB&"Match a in baby but not in bay"&@CRLF& _
+                            "a(?!b)"&@TAB&@TAB&"Match a in Stan but not in Stab"&@CRLF& _
+                            "(?<=a)b"&@TAB&@TAB&"Match b in crabs but not in cribs"&@CRLF& _
+                            "(?<!a)b"&@TAB&@TAB&"Match b in fib but not in fab"&@CRLF& _
+                            "(?i)"&@TAB&@TAB&"Case-insensitive mode"
+
 Global $rRetour
 
 Global $sFichierINI = @ScriptDir & "\DragDropAction.ini"
@@ -46,11 +77,7 @@ Global $Input0Name = GUICtrlCreateInput($_Gui_Input0Name, 24, 20, 522, 30)
 GUICtrlSetFont($Input0Name, 16, 400, 0, "MS Sans Serif")
 Global $Input1Regex = GUICtrlCreateInput("", 24, 60, 522, 30)
 GUICtrlSetFont($Input1Regex, 16, 400, 0, "MS Sans Serif")
-GUICtrlSetTip( $Input1Regex, "\ escape special caracter"&@CRLF& _
-                                                "\W non word"&@CRLF& _
-                                                "((?i)Test) match case insensitive "&@CRLF& _
-                                                ".*? match eventualy any characters"&@CRLF& _
-                                                "\d{3,6} match digi between 3 and 6")
+GUICtrlSetTip( $Input1Regex, $TipHelp)
 Global $Input2Destination = GUICtrlCreateInput("", 24, 140, 522, 30)
 GUICtrlSetFont($Input2Destination, 16, 400, 0, "MS Sans Serif")
 Global $Input3Rename = GUICtrlCreateInput("", 24, 180, 522, 30)

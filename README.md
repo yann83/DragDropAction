@@ -3,7 +3,7 @@
 
 ## Status
 
-[![Generic badge](https://img.shields.io/badge/Version-0.9b-green.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-1.0-green.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/autoit-3.3.14.5-green.svg)](https://shields.io/)
 
 ## Description
@@ -62,6 +62,8 @@ Example :
 ![Exemple](./images/image005.jpg)
 
 ## Historique
+
+21-12-27 : Ajout d'un tooltip sur la partie Regex, modifications des regex de substitution dans l'automatisation du string. Suppression de l'icône dans la zone de notification.
 
 21-06-06 : Ajout d'un champ de recherche dynamique et amélioration du code pour la partie settings
 
