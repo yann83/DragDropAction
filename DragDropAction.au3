@@ -9,7 +9,7 @@
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #cs ----------------------------------------------------------------------------
  AutoIt Version : 3.3.14.5
- Auteur:         OUTIN Yann
+ Auteur:         Yann83
  Description du programme :
 	< Outil de rangement automatique des fichiers>
 #ce ----------------------------------------------------------------------------
