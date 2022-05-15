@@ -30,7 +30,7 @@ Global $sFichierLog = @ScriptDir & "\" & StringTrimRight(@ScriptName,4) & ".log"
 
 Global Const $SC_DRAGMOVE1 = 0xF012
 Global $sFichierImage = @ScriptDir & "\play.jpg"
-Global $hRet
+Global $hRet,$Ret
 
 Global $Width = @DesktopWidth
 Global $Heigh = @DesktopHeight
@@ -89,6 +89,7 @@ GUICtrlSetColor($hDragDropPic, 0)
 
 Global $hContextMenu = GuiCtrlCreateContextMenu($hDragDropPic)
 Global $hContextMenuSettings = GuiCtrlCreateMenuItem("Settings", $hContextMenu)
+Global $hContextMenuLog = GuiCtrlCreateMenuItem("Voir le Log", $hContextMenu)
 Global $hContextMenuExit = GuiCtrlCreateMenuItem("Exit", $hContextMenu)
 
 Global $__aGUIDropFiles = 0
@@ -126,11 +127,13 @@ While 1
              $nMove = 0
              $nRenomme = 0
              $nFichiersTraites = 0
+             $nErrors = 0
 
              For $i = 1 To $__aGUIDropFiles[0]
                 ;################################### Phase1 capture
                 For $capture = 1 To $aSectionCapture[0][0]
                     If StringRegExp($__aGUIDropFiles[$i],$aSectionCapture[$capture][1],0) = 1 Then ; Est ce que $__aGUIDropFiles[$i] va matcher un pattern de la section capture ?
+                        _FileWriteLog($sFichierLog,"[MATCH] "&$__aGUIDropFiles[$i]&" > regex > "&$aSectionCapture[$capture][1])
                         $nID = $aSectionCapture[$capture][0]
                         $aParseCapture = StringRegExp($__aGUIDropFiles[$i],$aSectionCapture[$capture][1],1) ; On regex le string
                         $nCapture += 1
@@ -141,9 +144,11 @@ While 1
                             If $aSectionMove[$nID][1] <> "" Then
                                 $nMove += 1
                                 $sMoveTo = $aSectionMove[$nID][1] & "\"
+                                 _FileWriteLog($sFichierLog,"[MOVE] "&$__aGUIDropFiles[$i]&" > move > "&$aSectionMove[$nID][1] & "\")
                                 $aParseFileName = StringRegExp($__aGUIDropFiles[$i],".*\\(.*)(\..*)",1) ; on sépare le nom du fichier de son extension
                             Else
-                                 _FileWriteLog($sFichierLog,"Pas de déplacement pour "&$__aGUIDropFiles[$i])
+                                 _FileWriteLog($sFichierLog,"[ERROR] Pas de déplacement pour "&$__aGUIDropFiles[$i])
+                                 $nErrors += 1
                             EndIf
                         EndIf
                         ;################################### Phase3 rename
@@ -155,23 +160,39 @@ While 1
                                     If IsArray($aParseFileName) Then
                                         $nRenomme += 1
                                         $sFinalFileName =  _Rename($aParseRename,$aParseCapture)&$aParseFileName[1]
+                                        _FileWriteLog($sFichierLog,"[RENAME] "&$__aGUIDropFiles[$i]&" > rename > "&$sFinalFileName)
                                         If Not @error Then
                                             If $sMoveTo <> "" Then
-                                                FileMove($__aGUIDropFiles[$i],$sMoveTo&$sFinalFileName,9)
+                                                $Ret = FileMove($__aGUIDropFiles[$i],$sMoveTo&$sFinalFileName,8)
+                                                If $Ret = 1 Then _FileWriteLog($sFichierLog,"[SUCCES] "&$__aGUIDropFiles[$i]&" > deplacement > "&$sMoveTo&$sFinalFileName)
+                                                If $Ret = 0 Then
+                                                    _FileWriteLog($sFichierLog,"[ERROR] "&$__aGUIDropFiles[$i]&" < echec > "&$sMoveTo&$sFinalFileName)
+                                                    $nErrors += 1
+                                                EndIf
                                                 $nFichiersTraites += 1
+                                                ExitLoop
                                             EndIf
                                         Else
                                             $nRenomme -= 1
-                                            _FileWriteLog($sFichierLog,"ECHEC des groupes de "&$__aGUIDropFiles[$i])
+                                            _FileWriteLog($sFichierLog,"[ERROR] echec des groupes de "&$__aGUIDropFiles[$i])
+                                            $nErrors += 1
                                         EndIf
                                     EndIf
                                 Else
-                                     _FileWriteLog($sFichierLog,"ECHEC du renommage "&$__aGUIDropFiles[$i])
+                                     _FileWriteLog($sFichierLog,"[ERROR] echec renommage "&$__aGUIDropFiles[$i])
+                                     $nErrors += 1
                                 EndIf
                             ElseIf $sMoveTo <> "" Then ; cas ou il n'y pas de renommage mais on bouge le fichier quand même
-                                _FileWriteLog($sFichierLog,"Pas de renommage pour "&$__aGUIDropFiles[$i])
-                                FileMove($__aGUIDropFiles[$i],$sMoveTo&$aParseFileName[0]&$aParseFileName[1],9)
+                                _FileWriteLog($sFichierLog,"[ERROR] echec renommage pour "&$__aGUIDropFiles[$i])
+                                $nErrors += 1
+                                $Ret = FileMove($__aGUIDropFiles[$i],$sMoveTo&$aParseFileName[0]&$aParseFileName[1],8)
+                                  If $Ret = 1 Then _FileWriteLog($sFichierLog,"[SUCCES] "&$__aGUIDropFiles[$i]&" > deplacement > "&$sMoveTo&$aParseFileName[0]&$aParseFileName[1])
+                                  If $Ret = 0 Then
+                                      _FileWriteLog($sFichierLog,"[ERROR] "&$__aGUIDropFiles[$i]&" < echec > "&$sMoveTo&$aParseFileName[0]&$aParseFileName[1])
+                                      $nErrors += 1
+                                EndIf
                                 $nFichiersTraites += 1
+                                ExitLoop
                             EndIf
                          EndIf
                     ;Else
@@ -183,14 +204,16 @@ While 1
                 MsgBox(64,"Traitement terminé","Rien a traiter")
             Else
                 MsgBox(64,"Traitement terminé","Fichiers capturés : "&$nCapture&@CRLF&"Fichiers à déplacer : "&$nMove&@CRLF& _
-                                                            "Fichiers renommé : "&$nRenomme&@CRLF&"Total traités : "&$nFichiersTraites)
-                _FileWriteLog($sFichierLog,"Fichiers capturés : "&$nCapture&" Fichiers à déplacer : "&$nMove& _
-                                                            " Fichiers renommé : "&$nRenomme&" Total traités : "&$nFichiersTraites)
+                                                            "Fichiers renommé : "&$nRenomme&@CRLF&"Total traités : "&$nFichiersTraites&@CRLF& _
+                                                            "Total erreurs : "&$nErrors)
                 _FileWriteLog($sFichierLog,">>>> Fin du traitement")
             EndIf
 
         Case $hContextMenuSettings
             Run(@ScriptDir & "\" & $sSettings)
+
+        Case $hContextMenuLog
+            ShellExecute($sFichierLog)
     EndSwitch
 WEnd
 
