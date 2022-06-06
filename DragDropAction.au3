@@ -49,12 +49,12 @@ If Not IsArray($aSectionCapture) Then
     Exit
 EndIf
 Global $aSectionMove = IniReadSection($sFichierINI,"move")
-If Not IsArray($aSectionCapture) Then
+If Not IsArray($aSectionMove) Then
     _FileWriteLog($sFichierLog,"Il n'y a aucune valeurs renseignées dans la section move")
     Exit
 EndIf
 Global $aSectionRename = IniReadSection($sFichierINI,"rename")
-If Not IsArray($aSectionCapture) Then
+If Not IsArray($aSectionRename) Then
     _FileWriteLog($sFichierLog,"Il n'y a aucune valeurs renseignées dans la section rename")
     Exit
 EndIf
@@ -71,6 +71,7 @@ Global $aParseCaptureRows,$aParseRenameRows
 Global $nID,$nCapture,$nMove,$nRenomme,$nFichiersTraites
 Global $sMoveTo,$sFinalFileName
 Global $sSettings = "DragDropActionSettings.exe"
+Global $sTmpPath,$sTmpFileName
 
 If @Compiled Then
 	$hRet = _FileInstallFromResource("PLAY",$sFichierImage)
@@ -131,11 +132,14 @@ While 1
 
              For $i = 1 To $__aGUIDropFiles[0]
                 ;################################### Phase1 capture
+                $sTmpPath = _GetPath($__aGUIDropFiles[$i])
+                $sTmpFileName = _GetfileName($__aGUIDropFiles[$i])
+                _FileWriteLog($sFichierLog,">>>> Est ce que l'on capture "&$sTmpPath&$sTmpFileName&" ?")
                 For $capture = 1 To $aSectionCapture[0][0]
-                    If StringRegExp($__aGUIDropFiles[$i],$aSectionCapture[$capture][1],0) = 1 Then ; Est ce que $__aGUIDropFiles[$i] va matcher un pattern de la section capture ?
-                        _FileWriteLog($sFichierLog,"[MATCH] "&$__aGUIDropFiles[$i]&" > regex > "&$aSectionCapture[$capture][1])
+                    If StringRegExp($sTmpFileName,$aSectionCapture[$capture][1],0) = 1 Then ; Est ce que $sTmpFileName va matcher un pattern de la section capture ?
+                        _FileWriteLog($sFichierLog,"[MATCH] "&$sTmpFileName&" > regex > "&$aSectionCapture[$capture][1])
                         $nID = $aSectionCapture[$capture][0]
-                        $aParseCapture = StringRegExp($__aGUIDropFiles[$i],$aSectionCapture[$capture][1],1) ; On regex le string
+                        $aParseCapture = StringRegExp($sTmpFileName,$aSectionCapture[$capture][1],1) ; On regex le string
                         $nCapture += 1
                         $aParseCaptureRows = UBound($aParseCapture)-1 ; Calcul du nombre de lignes / groupes capturés
                         ;################################### Phase2 move
@@ -216,6 +220,16 @@ While 1
             ShellExecute($sFichierLog)
     EndSwitch
 WEnd
+
+Func _GetfileName($f_sSource)
+    Local $f_sFileName = StringRegExpReplace($f_sSource, "^.*\\", "")
+    Return $f_sFileName
+EndFunc
+
+Func _GetPath($f_sSource)
+    Local $f_sPath = StringRegExpReplace($f_sSource, "(^.*\\)(.*)", "\1")
+    Return $f_sPath
+EndFunc
 
 Func _Rename($aArrayRename,$aArrayRegex)
     Local $nGroup
