@@ -14,6 +14,7 @@
 	< Outil de rangement automatique des fichiers>
 #ce ----------------------------------------------------------------------------
 #NoTrayIcon
+
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
 #include <SendMessage.au3>
@@ -24,9 +25,12 @@
 #include <WinAPIInternals.au3>
 #include <WinAPIEx.au3>
 #include <Array.au3>
+#include <.\UDF\IniEx.au3>
 
 Global $sFichierINI = @ScriptDir & "\" & StringTrimRight(@ScriptName,4) & ".ini"
 Global $sFichierLog = @ScriptDir & "\" & StringTrimRight(@ScriptName,4) & ".log"
+
+Global $hFichierINI = _IniOpenFileEx($sFichierINI)
 
 Global Const $SC_DRAGMOVE1 = 0xF012
 Global $sFichierImage = @ScriptDir & "\play.jpg"
@@ -37,27 +41,29 @@ Global $Heigh = @DesktopHeight
 
 If Not FileExists($sFichierINI) Then
     _FileCreate($sFichierINI)
-    IniWrite($sFichierINI,"capture","1","")
-    IniWrite($sFichierINI,"move","1","")
-    IniWrite($sFichierINI,"rename","1","")
+    _IniWriteEx($hFichierINI,"capture","1","")
+    _IniWriteEx($hFichierINI,"move","1","")
+    _IniWriteEx($hFichierINI,"rename","1","")
 EndIf
 
 ;Les sections en tableau
-Global $aSectionCapture = IniReadSection($sFichierINI,"capture")
+Global $aSectionCapture = _IniReadSectionEx($hFichierINI,"capture",$INI_2DARRAYFIELD)
 If Not IsArray($aSectionCapture) Then
     _FileWriteLog($sFichierLog,"Il n'y a aucune valeurs renseignées dans la section capture")
     Exit
 EndIf
-Global $aSectionMove = IniReadSection($sFichierINI,"move")
+Global $aSectionMove = _IniReadSectionEx($hFichierINI,"move",$INI_2DARRAYFIELD)
 If Not IsArray($aSectionMove) Then
     _FileWriteLog($sFichierLog,"Il n'y a aucune valeurs renseignées dans la section move")
     Exit
 EndIf
-Global $aSectionRename = IniReadSection($sFichierINI,"rename")
+Global $aSectionRename = _IniReadSectionEx($hFichierINI,"rename",$INI_2DARRAYFIELD)
 If Not IsArray($aSectionRename) Then
     _FileWriteLog($sFichierLog,"Il n'y a aucune valeurs renseignées dans la section rename")
     Exit
 EndIf
+
+_IniCloseFileEx($hFichierINI)
 
 $hRet = _SearchDuplicateValue($sFichierINI)
 If $hRet <> 1 Then
@@ -269,14 +275,16 @@ Func _StringExplodeRegex($sString)
 EndFunc
 
 Func _SearchDuplicateValue($sConfigFile)
-    Local $LectureSectionIni = IniReadSectionNames($sConfigFile)
+    Local $hConfigFile = _IniOpenFileEx($sConfigFile)
+    Local $LectureSectionIni = _IniReadSectionNamesEx($hConfigFile)
     Local $aTableauOrg,$aTableauUnique
     For $i = 1 To $LectureSectionIni[0]
-        $aTableauOrg = IniReadSection($sConfigFile,$LectureSectionIni[$i])
+        $aTableauOrg = _IniReadSectionEx($hConfigFile,$LectureSectionIni[$i],$INI_2DARRAYFIELD)
         If Not IsArray($aTableauOrg) Then SetError(2,0,"La section "&$LectureSectionIni[$i]&" n'est pas remplie")
         $aTableauUnique = _ArrayUnique($aTableauOrg,0,1)
         If Number($aTableauOrg[0][0]) > Number($aTableauUnique[0]) Then Return SetError(2,0,$LectureSectionIni[$i])
     Next
+    _IniCloseFileEx($hConfigFile)
     SetError(0)
     Return(1)
 EndFunc

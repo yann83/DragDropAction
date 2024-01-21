@@ -1,78 +1,104 @@
 #include-once
 
 Func _InitializeFichierINI($sINIFile)
+        Local $bNew = False
         If Not FileExists($sINIFile) Then
+            $bNew = True
             _FileCreate($sINIFile)
-        Else
-            Local $aTestSection = IniReadSection($sINIFile,"name")
-            If Not @error Then Return False
         EndIf
-        IniWrite($sINIFile,"name","1","First entry")
-        IniWrite($sINIFile,"capture","1","")
-        IniWrite($sINIFile,"move","1","")
-        IniWrite($sINIFile,"rename","1","")
-        Return True
+        Local $hNIFile = _IniOpenFileEx($sINIFile)
+        If Not $bNew Then
+            Local $aTestSection = _IniReadSectionEx($hNIFile,"name",$INI_2DARRAYFIELD)
+            If Not @error Then
+                _IniCloseFileEx($hNIFile)
+                Return False
+            EndIf
+        Else
+            _IniWriteEx($hNIFile,"name","1","First entry")
+            _IniWriteEx($hNIFile,"capture","1","")
+            _IniWriteEx($hNIFile,"move","1","")
+            _IniWriteEx($hNIFile,"rename","1","")
+            _IniCloseFileEx($hNIFile)
+            Return True
+        EndIf
 EndFunc
 
 Func _Ajouter($sINIFile,$sName,$sRegex,$sMove,$sRename)
-    Local $aSectionMove = IniReadSection($sINIFile,"name")
+    Local $hNIFile = _IniOpenFileEx($sINIFile)
+    Local $aSectionMove = _IniReadSectionEx($hNIFile,"name",$INI_2DARRAYFIELD)
     Local $nID = 1
     While 1
         If _ArraySearch($aSectionMove,$nID,1, 0, 0, 0, 1, 0) > -1 Then
             $nID += 1
         Else
-            IniWrite($sINIFile,"name",$nID,$sName)
-            IniWrite($sINIFile,"capture",$nID,$sRegex)
-            IniWrite($sINIFile,"move",$nID,$sMove)
-            IniWrite($sINIFile,"rename",$nID,$sRename)
+            _IniWriteEx($hNIFile,"name",$nID,$sName)
+            _IniWriteEx($hNIFile,"capture",$nID,$sRegex)
+            _IniWriteEx($hNIFile,"move",$nID,$sMove)
+            _IniWriteEx($hNIFile,"rename",$nID,$sRename)
+            _IniCloseFileEx($hNIFile)
             Return (True)
         EndIf
     WEnd
 EndFunc
 
 Func _Modifier($sINIFile,$sID,$bStatus,$hInputName,$hInputCapture,$hInputMove,$InputRename)
+    Local $hNIFile = _IniOpenFileEx($sINIFile)
     If $bStatus = True Then ; on rempli les inputs
-        GUICtrlSetData($hInputName,IniRead($sINIFile,"name",$sID,"Erreur lecture"))
-        GUICtrlSetData($hInputCapture,IniRead($sINIFile,"capture",$sID,"Erreur lecture"))
-        GUICtrlSetData($hInputMove,IniRead($sINIFile,"move",$sID,"Erreur lecture"))
-        GUICtrlSetData($InputRename,IniRead($sINIFile,"rename",$sID,"Erreur lecture"))
+        GUICtrlSetData($hInputName,_IniReadEx($hNIFile,"name",$sID,"Erreur lecture"))
+        GUICtrlSetData($hInputCapture,_IniReadEx($hNIFile,"capture",$sID,"Erreur lecture"))
+        GUICtrlSetData($hInputMove,_IniReadEx($hNIFile,"move",$sID,"Erreur lecture"))
+        GUICtrlSetData($InputRename,_IniReadEx($hNIFile,"rename",$sID,"Erreur lecture"))
+        _IniCloseFileEx($hNIFile)
         Return True
     ElseIf $bStatus = False Then; on enregistre les modis
-        IniWrite($sINIFile,"name",$sID,GUICtrlRead($hInputName))
-        IniWrite($sINIFile,"capture",$sID,GUICtrlRead($hInputCapture))
-        IniWrite($sINIFile,"move",$sID,GUICtrlRead($hInputMove))
-        IniWrite($sINIFile,"rename",$sID,GUICtrlRead($InputRename))
+        _IniWriteEx($hNIFile,"name",$sID,GUICtrlRead($hInputName))
+        _IniWriteEx($hNIFile,"capture",$sID,GUICtrlRead($hInputCapture))
+        _IniWriteEx($hNIFile,"move",$sID,GUICtrlRead($hInputMove))
+        _IniWriteEx($hNIFile,"rename",$sID,GUICtrlRead($InputRename))
+        _IniCloseFileEx($hNIFile)
         Return False
     EndIf
 EndFunc
 
 Func _Supprimer($sINIFile,$sID)
-    Local $aSections = IniReadSectionNames($sINIFile)
+    Local $hNIFile = _IniOpenFileEx($sINIFile)
+    Local $aSections = _IniReadSectionNamesEx($hNIFile)
     For $i = 1 To $aSections[0]
-        IniDelete($sINIFile,$aSections[$i],$sID)
+        _IniDeleteEx($hNIFile,$aSections[$i],$sID)
     Next
-    $aSections = IniReadSection($sINIFile,"name")
+    $aSections = _IniReadSectionEx($hNIFile,"name",$INI_2DARRAYFIELD)
     If @error Then
-        IniWrite($sINIFile,"name","1","Name me")
+        _IniWriteEx($hNIFile,"name","1","Name me")
+        _IniCloseFileEx($hNIFile)
         Return False
     EndIf
+    _IniCloseFileEx($hNIFile)
     Return True
 EndFunc
 
 Func _IniRearange($sINIFile)
-    Local $aSections = IniReadSectionNames($sINIFile)
+    Local $hNIFile = _IniOpenFileEx($sINIFile)
+    Local $aSections = _IniReadSectionNamesEx($hNIFile)
     Local $aSection
     Local $nSomme = 0
+    Local $nNbLignes = 0
     For $i = 1 To $aSections[0]
-        $aSection = IniReadSection($sINIFile,$aSections[$i])
-
+        $aSection = _IniReadSectionEx($hNIFile,$aSections[$i],$INI_2DARRAYFIELD)
+        If @error Then
+            _IniCloseFileEx($hNIFile)
+            Return SetError(1,0,$aSection&@error)
+        EndIf
+        $nNbLignes = Number($aSection[0][0])
+        ;ConsoleWrite($aSection[0][0]&@CRLF)
+        ;_ArrayDisplay($aSection)
         # Verification du nombre d'entrée
         If $nSomme = 0 Then
-            $nSomme = Number($aSection[0][0])
-        ElseIf $nSomme <> Number($aSection[0][0]) Then
-            Return SetError(1,0,"La somme des entrées de "&$aSections[$i]&" est differente de la précédente")
+            $nSomme = $nNbLignes
+        ElseIf $nSomme <> $nNbLignes Then
+            _IniCloseFileEx($hNIFile)
+            Return SetError(1,0,"La somme des entrées de "&$aSections[$i]&" ("&$nNbLignes&") est differente de la précédente : "&$aSections[$i-1]&" ("&$nSomme&")")
         Else
-            $nSomme = Number($aSection[0][0])
+            $nSomme = $nNbLignes
         EndIf
         # Fin Verification du nombre d'entrée
 
@@ -86,7 +112,7 @@ Func _IniRearange($sINIFile)
     Next
 
     For $i = 1 To $aSections[0]  ;Step -1 ; lecture de bas vers le haut
-        $aSection = IniReadSection($sINIFile,$aSections[$i])
+        $aSection = _IniReadSectionEx($hNIFile,$aSections[$i],$INI_2DARRAYFIELD)
         # Verification du de l'ordre des ID
         For $k= 1 To $aSection[0][0]
             If $k <> Number($aSection[$k][0]) Then $aSection[$k][0] = $k
@@ -94,13 +120,13 @@ Func _IniRearange($sINIFile)
         # Fin Verification du de l'ordre des ID
 
         # Reecriture de la section
-        IniDelete($sINIFile,$aSections[$i])
+        _IniDeleteEx($hNIFile,$aSections[$i],$INI_REMOVE )
         For $k= 1 To $aSection[0][0]
-            IniWrite($sINIFile,$aSections[$i],$aSection[$k][0],$aSection[$k][1])
+            _IniWriteEx($hNIFile,$aSections[$i],$aSection[$k][0],$aSection[$k][1])
         Next
         # Fin Reecriture de la section
     Next
-
+    _IniCloseFileEx($hNIFile)
     SetError(0)
     Return True
 EndFunc

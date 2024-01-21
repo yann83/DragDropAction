@@ -15,6 +15,7 @@
 #ce ----------------------------------------------------------------------------
 #NoTrayIcon
 #include <.\UDF\_Languages.au3>
+#include <.\UDF\IniEx.au3>
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
 #include <GUIConstantsEx.au3>
@@ -60,6 +61,7 @@ Global $TipHelp = "."&@TAB&@TAB&"Any character, except newline"&@CRLF& _
 Global $rRetour
 
 Global $sFichierINI = @ScriptDir & "\DragDropAction.ini"
+If @error Then MsgBox(16,"Erreur","Le fichier "&$sFichierINI&" renvoi "&@error)
 Global $bFichierINIError = _InitializeFichierINI($sFichierINI)
 
 If Not $bFichierINIError Then
@@ -136,6 +138,7 @@ GUISetState(@SW_SHOW)
 
 ;initialyze search array
 Global $aMoteurRecherche = _TableauObjetsEtRecherche($sFichierINI,"name")
+If @error Then MsgBox(16,"Erreur",$aMoteurRecherche)
                             ;$aObjets ;$iNbObjets $aTableauRecherche $iNbTableauRecherche
 Global $aObjets = $aMoteurRecherche[0]
 Global $aTableauRecherche = $aMoteurRecherche[2]
@@ -272,7 +275,7 @@ While 1
                 MsgBox(16,"Erreur","Veuillez renseigner les champs Regex et Rename.")
             Else
                 _Ajouter($sFichierINI,GUICtrlRead($Input4Name) ,GUICtrlRead($Input1Regex) ,GUICtrlRead($Input2Destination),GUICtrlRead($Input3Rename))
-                _Recharge()
+                _Recharge($sFichierINI)
                 MsgBox(64,"","L'entrée "&GUICtrlRead($Input4Name)&" a été ajoutée")
             EndIf
         Case $Button7Mod
@@ -283,7 +286,7 @@ While 1
                  GUICtrlSetState($Button6Add,$GUI_ENABLE)
                 GUICtrlSetState($Button8Del,$GUI_ENABLE)
                 $aDataListView[1] = ""
-                 _Recharge()
+                 _Recharge($sFichierINI)
                 MsgBox(64,"","L'entrée "&$sSelection&" a été modifiée")
             ElseIf $bIsModif = False Then
                 $aDataListView = _Selection()
@@ -311,7 +314,7 @@ While 1
                     EndIf
                 EndIf
                 MsgBox(64,"","L'entrée "&$aDataListView[1]&" a été supprimée")
-                _Recharge()
+                _Recharge($sFichierINI)
             EndIf
 #EndRegion ### END CRUD section ###
     EndSwitch
@@ -325,18 +328,19 @@ Func _Selection()
     Return (0)
 EndFunc
 
-Func _Recharge()
+Func _Recharge($sPathINI)
     GUICtrlSetData($idEdit,"")
      _GUICtrlListView_DeleteAllItems($hListView)
-    $aMoteurRecherche = _TableauObjetsEtRecherche($sFichierINI,"name")
+    $aMoteurRecherche = _TableauObjetsEtRecherche($sPathINI,"name")
     $aObjets = $aMoteurRecherche[0]
     $aTableauRecherche = $aMoteurRecherche[2]
     GUICtrlSendMsg( $idListView, $LVM_SETITEMCOUNT, $aMoteurRecherche[3], 0 )
 EndFunc
 
-Func _TableauObjetsEtRecherche($sPathIni,$sIniSection)
+Func _TableauObjetsEtRecherche($sPathINI,$sIniSection)
     Local $ifNbObjets = 0, $afObjets[1000][2]
-    Local $aDATA = IniReadSection($sPathIni,$sIniSection)
+    $hPathINI = _IniOpenFileEx($sPathINI)
+    Local $aDATA = _IniReadSectionEx($hPathINI,$sIniSection,$INI_2DARRAYFIELD)
     If Not @error  Then
         ; Enumerate through the array displaying the section names.
         For $i = 1 To $aDATA[0][0]
@@ -356,8 +360,10 @@ Func _TableauObjetsEtRecherche($sPathIni,$sIniSection)
         $afRetTableau[2] = $afTableauRecherche
         $afRetTableau[3] = $ifNbTableauRecherche
     Else
-        Return SetError(1,0,"Erreur lecture tableau")
+        _IniCloseFileEx($hPathINI)
+        Return SetError(1,0,"Erreur [_TableauObjetsEtRecherche] lecture tableau "&@error)
     EndIf
+     _IniCloseFileEx($hPathINI)
     SetError(0)
      Return $afRetTableau
 EndFunc
